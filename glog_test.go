@@ -200,13 +200,13 @@ func TestError(t *testing.T) {
 	setFlags()
 	defer logging.swap(logging.newBuffers())
 	Error("test")
+	str := contents(errorLog)
 	if !contains(errorLog, "E", t) {
-		t.Errorf("Error has wrong character: %q", contents(errorLog))
+		t.Errorf("Error has wrong character: %q", str)
 	}
 	if !contains(errorLog, "test", t) {
 		t.Error("Error failed")
 	}
-	str := contents(errorLog)
 	if !contains(warningLog, str, t) {
 		t.Error("Warning failed")
 	}
@@ -238,9 +238,9 @@ func TestWarning(t *testing.T) {
 func TestV(t *testing.T) {
 	setFlags()
 	defer logging.swap(logging.newBuffers())
-	logging.verbosity.Set("2")
+	logging.verbosity.Set("3")
 	defer logging.verbosity.Set("0")
-	V(2).Info("test")
+	V(3).Info("test")
 	if !contains(infoLog, "I", t) {
 		t.Errorf("Info has wrong character: %q", contents(infoLog))
 	}
@@ -253,7 +253,7 @@ func TestV(t *testing.T) {
 func TestVmoduleOn(t *testing.T) {
 	setFlags()
 	defer logging.swap(logging.newBuffers())
-	logging.vmodule.Set("glog_test=2")
+	logging.vmodule.Set("glog_test=3")
 	defer logging.vmodule.Set("")
 	if !V(1) {
 		t.Error("V not enabled for 1")
@@ -261,10 +261,13 @@ func TestVmoduleOn(t *testing.T) {
 	if !V(2) {
 		t.Error("V not enabled for 2")
 	}
-	if V(3) {
-		t.Error("V enabled for 3")
+	if !V(3) {
+		t.Error("V not enabled for 3")
 	}
-	V(2).Info("test")
+	if V(4) {
+		t.Error("V enabled for 4")
+	}
+	V(3).Info("test")
 	if !contains(infoLog, "I", t) {
 		t.Errorf("Info has wrong character: %q", contents(infoLog))
 	}
@@ -279,33 +282,34 @@ func TestVmoduleOff(t *testing.T) {
 	defer logging.swap(logging.newBuffers())
 	logging.vmodule.Set("notthisfile=2")
 	defer logging.vmodule.Set("")
-	for i := 1; i <= 3; i++ {
+	for i := 1; i <= 4; i++ {
 		if V(Level(i)) {
 			t.Errorf("V enabled for %d", i)
 		}
 	}
-	V(2).Info("test")
+	V(3).Info("test")
 	if contents(infoLog) != "" {
 		t.Error("V logged incorrectly")
 	}
 }
 
-// vGlobs are patterns that match/don't match this file at V=2.
+// vGlobs are patterns that match/don't match this file at V=3.
 var vGlobs = map[string]bool{
 	// Easy to test the numeric match here.
-	"glog_test=1": false, // If -vmodule sets V to 1, V(2) will fail.
-	"glog_test=2": true,
-	"glog_test=3": true, // If -vmodule sets V to 1, V(3) will succeed.
-	// These all use 2 and check the patterns. All are true.
-	"*=2":           true,
-	"?l*=2":         true,
-	"????_*=2":      true,
-	"??[mno]?_*t=2": true,
-	// These all use 2 and check the patterns. All are false.
-	"*x=2":         false,
-	"m*=2":         false,
-	"??_*=2":       false,
-	"?[abc]?_*t=2": false,
+	"glog_test=1": false, // If -vmodule sets V to 1, V(3) will fail.
+	"glog_test=2": false,
+	"glog_test=3": true,
+	"glog_test=4": true, // If -vmodule sets V to 1, V(4) will succeed.
+	// These all use 3 and check the patterns. All are true.
+	"*=3":           true,
+	"?l*=3":         true,
+	"????_*=3":      true,
+	"??[mno]?_*t=3": true,
+	// These all use 3 and check the patterns. All are false.
+	"*x=3":         false,
+	"m*=3":         false,
+	"??_*=3":       false,
+	"?[abc]?_*t=3": false,
 }
 
 // Test that vmodule globbing works as advertised.
@@ -314,8 +318,8 @@ func testVmoduleGlob(pat string, match bool, t *testing.T) {
 	defer logging.swap(logging.newBuffers())
 	defer logging.vmodule.Set("")
 	logging.vmodule.Set(pat)
-	if V(2) != Verbose(match) {
-		t.Errorf("incorrect match for %q: got %t expected %t", pat, V(2), match)
+	if V(3) != Verbose(match) {
+		t.Errorf("incorrect match for %q: got %t expected %t", pat, V(3), match)
 	}
 }
 

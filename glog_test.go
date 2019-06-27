@@ -215,6 +215,22 @@ func TestError(t *testing.T) {
 	}
 }
 
+// Test that a Debug log goes to Error, Warning and Info.
+// Even in the Info log, the source character will be E, so the data should
+// all be identical.
+func TestDebug(t *testing.T) {
+	setFlags()
+	defer logging.swap(logging.newBuffers())
+	Debug("test")
+	str := contents(debugLog)
+	if !contains(debugLog, "D", t) {
+		t.Errorf("Debug has wrong character: %q", str)
+	}
+	if !contains(debugLog, "test", t) {
+		t.Error("Debug failed")
+	}
+}
+
 // Test that a Warning log goes to Info.
 // Even in the Info log, the source character will be W, so the data should
 // all be identical.
